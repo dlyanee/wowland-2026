@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вечериночка в WOWLand · Для неё</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%80%3C/text%3E%3C/svg%3E">
+<style>
+:root{--plum:#5D2C70;--ink:#2B1636;--gold:#D4A64A;--blush:#FADCD9;--ivory:#FFF8F5;--line:#E7CFC9;--err:#B3261E;--dark:#31113f}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--ivory);color:var(--ink);font:400 16px/1.55 Arial,system-ui,sans-serif}
+.hero{background:linear-gradient(135deg,#f9d9df 0%,#edd8f5 100%);text-align:center;padding:48px 20px 76px}h1{font:700 clamp(34px,7vw,54px)/1.06 Georgia,serif;color:var(--plum);margin:0 auto 14px;max-width:730px}.lead{max-width:650px;margin:0 auto;font-size:19px}.lead b{color:var(--plum)}
+.info,.seats{max-width:680px;margin:23px auto 0;text-align:left;background:#fffdf9;border:2px solid var(--gold);border-radius:18px;padding:18px 20px}.info p{margin:0}.info p+p{margin-top:10px}.info a{color:var(--plum);font-weight:700}.date{font:700 27px/1.2 Georgia,serif;color:var(--plum);text-align:center;padding-bottom:12px;border-bottom:1px solid var(--gold)}
+.seats{margin-top:15px;text-align:center;font-weight:700;color:var(--plum);padding:10px 16px;border-radius:999px}.seats b{font-size:20px}.seats.clickable{cursor:pointer}.seats.clickable b{font-size:16px;text-decoration:underline dotted}
+main{max-width:710px;margin:-42px auto 60px;padding:0 16px}form,.done{background:#fff;border-radius:22px;padding:30px 24px;box-shadow:0 12px 40px rgba(93,44,112,.14)}h2{font:700 29px/1.15 Georgia,serif;color:var(--plum);margin:0 0 11px}.intro{margin:0 0 24px;color:#624f69}
+.critical{background:var(--dark);color:#fff;border:4px solid var(--gold);border-radius:18px;padding:18px 20px;margin:0 0 22px;font-size:18px;font-weight:700;text-align:center;box-shadow:0 5px 0 rgba(212,166,74,.35)}.critical strong{color:#ffe29b;font-size:22px;display:block;margin-bottom:5px}.shoes{background:#FFF4DC;border:2px solid var(--gold);border-radius:16px;padding:15px 18px;margin:0 0 22px;font-weight:700}.shoes strong{color:var(--plum)}
+.place{background:#f9f2fb;border:1.5px solid #d8bfe2;border-radius:16px;padding:18px 20px;margin:0 0 23px}.place h3{font:700 23px Georgia,serif;color:var(--plum);margin:0 0 8px}.place p{margin:0 0 10px}.place ul{margin:0;padding-left:20px}.place li+li{margin-top:7px}
+.f{margin:0 0 20px}label{display:block;font-weight:700;margin-bottom:7px}input[type=text],input[type=tel],input[type=number]{display:block;width:100%;font:inherit;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--ivory);color:var(--ink)}input:focus-visible{outline:3px solid var(--gold);outline-offset:1px;border-color:var(--plum)}.hint{font-size:14px;color:#755f7b;margin:5px 0 0}.opt{display:flex;align-items:flex-start;gap:11px;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;font-weight:400}.opt input{accent-color:var(--plum);width:20px;height:20px;margin:2px 0 0;flex:none}.err{display:none;color:var(--err);font-size:14px;margin-top:5px}.bad .err{display:block}.bad input{border-color:var(--err)}.hp{position:absolute;left:-9999px}
+.reserve{display:none;background:#FFF4DC;border:2px solid var(--gold);border-radius:16px;padding:14px 18px;margin:0 0 20px;font-weight:600}.reserve strong{color:var(--plum)}button{display:block;width:100%;font:700 18px Arial,sans-serif;color:#fff;background:var(--plum);border:0;border-radius:14px;padding:16px;cursor:pointer;margin-top:6px}button:hover{background:#4b2359}button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}button:disabled{opacity:.65;cursor:wait}#fail{display:none;color:var(--err);margin-top:14px;text-align:center}.done{display:none;border:2px solid var(--gold);padding:36px 24px;text-align:center}.done h2{font-size:32px}.done button{background:#fff;color:var(--plum);border:2px solid var(--plum)}.done .critical{text-align:left;margin-top:22px}@media(max-width:480px){.hero{padding:38px 16px 66px}form,.done{padding:25px 18px}.date{font-size:24px}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>«Вечериночка»<br>в WOWLand</h1>
+  <p class="lead"><b>Сладкий стол, фокусник</b> и праздничное настроение для детей.</p>
+  <div class="info">
+    <p class="date">3 декабря 2026 года · 14:30–17:00</p>
+    <p><b>Место:</b> интерактивный парк <a href="https://www.instagram.com/wowlandminsk" target="_blank" rel="noopener">«WOWLand»</a></p>
+  </div>
+  <p class="seats" id="seatsBox">🎉 Свободных мест для детей: <b id="seatsLeft">…</b> из <span id="seatsTotal">15</span></p>
+</header>
+
+<main>
+<form id="form" novalidate>
+  <h2>Форма участия</h2>
+  <p class="intro">Одна анкета — для одного ребёнка.</p>
+
+  <div class="critical">
+    <strong>ВНИМАНИЕ</strong>
+    Ограничение: участие на коляске в этом зале, к сожалению, не предусмотрено.
+  </div>
+
+  <div class="shoes">
+    <strong>Важно:</strong> маме и ребёнку нужны носки или сменная обувь <b>без каблуков</b> для защиты коврового покрытия.
+  </div>
+
+  <section class="place">
+    <h3>Интерактивный парк «WOWLand»</h3>
+    <p>Игровое пространство нового поколения, где современные технологии соединяются с активным отдыхом. 🚀</p>
+    <ul>
+      <li><b>Интерактивные проекции:</b> огромные стены-экраны реагируют на касания и движения — дети попадают внутрь компьютерной игры.</li>
+      <li><b>Лазерный лабиринт:</b> испытание на ловкость в стиле шпионских фильмов.</li>
+      <li><b>Ожившие рисунки:</b> ребёнок раскрашивает персонажа и сразу видит его живым в 3D-мире на экране.</li>
+      <li><b>Интерактивная песочница:</b> ландшафт меняет цвет в зависимости от высоты построек.</li>
+      <li><b>Безопасность и приватность:</b> весь парк, 180 кв. м, на время праздника закрывается только для нашей компании.</li>
+      <li><b>Профессиональное сопровождение:</b> ведущие берут на себя досуг детей, а родители могут отдыхать в банкетной зоне.</li>
+    </ul>
+  </section>
+
+  <div class="f" data-f="fio">
+    <label for="fio">ФИО мамы</label>
+    <input type="text" id="fio" autocomplete="name" placeholder="Иванова Мария Ивановна">
+    <p class="hint">ФАМИЛИЯ Имя Отчество — в таком порядке.</p>
+    <div class="err">Укажите фамилию, имя и отчество полностью.</div>
+  </div>
+
+  <div class="f" data-f="phone">
+    <label for="phone">Телефон</label>
+    <input type="tel" id="phone" autocomplete="tel" inputmode="tel" placeholder="+375-29-123-45-67" maxlength="17">
+    <p class="hint">Формат: +375-00-000-00-00</p>
+    <div class="err">Укажите телефон в формате +375-00-000-00-00.</div>
+  </div>
+
+  <div class="f" data-f="childName">
+    <label for="childName">Имя ребёнка</label>
+    <input type="text" id="childName" placeholder="Например: Миша">
+    <div class="err">Укажите имя ребёнка.</div>
+  </div>
+
+  <div class="f" data-f="childAge">
+    <label for="childAge">Возраст ребёнка</label>
+    <input type="number" id="childAge" inputmode="numeric" min="0" max="40" step="1" placeholder="Полных лет">
+    <div class="err">Укажите возраст числом от 0 до 40.</div>
+  </div>
+
+  <input class="hp" type="text" id="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+  <div class="f" data-f="consent">
+    <label class="opt"><input type="checkbox" id="consent"> <span>Даю согласие на обработку моих персональных данных и данных ребёнка для организации мероприятия.</span></label>
+    <div class="err">Поставьте галочку, чтобы отправить форму.</div>
+  </div>
+
+  <div class="critical">
+    <strong>ВНИМАНИЕ</strong>
+    Участие на коляске в этом зале, к сожалению, не предусмотрено.
+  </div>
+  <div class="shoes">
+    <strong>Напоминание:</strong> маме и ребёнку нужны носки или сменная обувь <b>без каблуков</b> для защиты коврового покрытия.
+  </div>
+
+  <div class="reserve" id="reserveBanner"><strong>Основные 15 мест уже заняты.</strong> Заявку всё ещё можно отправить в резерв.</div>
+  <button type="submit" id="send">Отправить заявку</button>
+  <div id="fail" role="alert">Не удалось отправить заявку. Проверьте интернет и попробуйте ещё раз.</div>
+</form>
+
+<section class="done" id="done" role="status" aria-live="polite">
+  <h2>Спасибо, заявка принята!</h2>
+  <p id="doneText"></p>
+  <div class="critical">
+    <strong>ВНИМАНИЕ</strong>
+    Участие на коляске в этом зале, к сожалению, не предусмотрено.
+  </div>
+  <div class="shoes">
+    <strong>Не забудьте:</strong> маме и ребёнку нужны носки или сменная обувь <b>без каблуков</b> для защиты коврового покрытия.
+  </div>
+  <button type="button" id="again">Заполнить ещё одну анкету</button>
+</section>
+</main>
+
+<script>
+const CONFIG = {
+  scriptUrl: 'https://script.google.com/macros/s/AKfycby6f8oJWYXJirDjXmvE0cEXWFj0a7bZn9KNPa9qDId6ekyx0MSsb_EUz8rvoALw3aaS/exec',
+  eventId: 'wowland-party-2026-12-03',
+  seats: 15
+};
+
+const $ = id => document.getElementById(id);
+const words = text => text.trim().split(/\s+/).filter(Boolean);
+const nameOk = text => /^[\p{L}\-'’.\s]+$/u.test(text);
+const mark = (key, bad) => document.querySelector('[data-f="' + key + '"]').classList.toggle('bad', bad);
+let submitting = false;
+let seatsFull = false;
+let counterCycle = 0;
+const CACHE_KEY = 'seats_' + CONFIG.eventId;
+const CACHE_TTL = 60 * 1000;
+const RETRY_DELAYS = [0, 5000, 20000];
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function formatBelarusPhone(value) {
+  let digits = value.replace(/\D/g, '');
+  if (digits.startsWith('375')) digits = digits.slice(3);
+  digits = digits.slice(0, 9);
+  const groups = [digits.slice(0, 2), digits.slice(2, 5), digits.slice(5, 7), digits.slice(7, 9)].filter(Boolean);
+  return '+375' + (groups.length ? '-' + groups.join('-') : '');
+}
+$('phone').addEventListener('input', event => { event.target.value = formatBelarusPhone(event.target.value); });
+$('phone').addEventListener('focus', event => { if (!event.target.value) event.target.value = '+375-'; });
+
+function cacheGet() { try { const value = JSON.parse(localStorage.getItem(CACHE_KEY)); return value && Date.now() - value.t < CACHE_TTL ? value : null; } catch (_) { return null; } }
+function cachePut(left) { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ left, t: Date.now() })); } catch (_) {} }
+function applyLeft(left) {
+  seatsFull = left <= 0;
+  $('seatsLeft').textContent = left;
+  $('reserveBanner').style.display = seatsFull ? 'block' : 'none';
+  $('send').textContent = seatsFull ? 'Отправить заявку в резерв' : 'Отправить заявку';
+}
+async function getJson(url, timeout = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try { const response = await fetch(url, { cache: 'no-store', signal: controller.signal }); if (!response.ok) throw new Error('HTTP ' + response.status); return await response.json(); }
+  finally { clearTimeout(timer); }
+}
+async function loadCounter() {
+  if (submitting) return;
+  const cycle = ++counterCycle;
+  const box = $('seatsBox');
+  box.classList.remove('clickable'); box.removeAttribute('title');
+  const cached = cacheGet();
+  if (cached) applyLeft(cached.left); else $('seatsLeft').textContent = '…';
+  for (let i = 0; i < RETRY_DELAYS.length; i++) {
+    if (i) await sleep(RETRY_DELAYS[i]);
+    if (cycle !== counterCycle || submitting) return;
+    try {
+      const url = new URL(CONFIG.scriptUrl);
+      url.searchParams.set('action', 'count'); url.searchParams.set('event', CONFIG.eventId); url.searchParams.set('_ts', String(Date.now()));
+      const data = await getJson(url.toString());
+      if (cycle !== counterCycle) return;
+      if (data.result !== 'ok' || !Number.isFinite(Number(data.available))) throw new Error('Некорректный ответ счётчика');
+      const capacity = Number(data.capacity); const left = Math.max(0, Number(data.available));
+      if (Number.isFinite(capacity) && capacity > 0) $('seatsTotal').textContent = capacity;
+      cachePut(left); applyLeft(left); return;
+    } catch (error) { console.warn('Не удалось обновить счётчик:', error); }
+  }
+  if (cycle !== counterCycle) return;
+  if (!cached) $('seatsLeft').textContent = 'обновить ↻';
+  box.classList.add('clickable'); box.title = 'Нажмите, чтобы обновить счётчик';
+}
+$('seatsBox').addEventListener('click', () => { if ($('seatsBox').classList.contains('clickable') && !submitting) loadCounter(); });
+window.addEventListener('focus', loadCounter); window.addEventListener('online', loadCounter); setInterval(loadCounter, 60000); loadCounter();
+
+$('form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (submitting) return;
+  const fio = $('fio').value.trim();
+  const phone = $('phone').value.trim();
+  const childName = $('childName').value.trim();
+  const childAge = $('childAge').value.trim();
+  const ageNumber = Number(childAge);
+  const checks = {
+    fio: words(fio).length >= 3 && nameOk(fio),
+    phone: /^\+375-\d{2}-\d{3}-\d{2}-\d{2}$/.test(phone),
+    childName: words(childName).length >= 1 && nameOk(childName),
+    childAge: childAge !== '' && Number.isInteger(ageNumber) && ageNumber >= 0 && ageNumber <= 40,
+    consent: $('consent').checked
+  };
+  let firstBad = null;
+  for (const key in checks) { mark(key, !checks[key]); if (!checks[key] && !firstBad) firstBad = key; }
+  if (firstBad) { document.querySelector('[data-f="' + firstBad + '"]').scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+
+  const payload = {
+    _event: CONFIG.eventId,
+    'ФИО мамы': fio,
+    'Телефон': phone,
+    'Имя ребёнка': childName,
+    'Возраст ребёнка': childAge,
+    'Количество участников': 1,
+    'Дата и время мероприятия': '03.12.2026, 14:30–17:00',
+    'Место': 'Интерактивный парк «WOWLand»',
+    website: $('website').value
+  };
+  const button = $('send'); button.disabled = true; button.textContent = 'Отправляем…'; $('fail').style.display = 'none'; submitting = true;
+  const slowTimer = setTimeout(() => { if (submitting) button.textContent = 'Отправляем… Пожалуйста, подождите ещё немного'; }, 10000);
+  try {
+    const response = await fetch(CONFIG.scriptUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const result = await response.json();
+    if (result.result !== 'ok' || !result.status) throw new Error(result.message || 'Сервер не подтвердил заявку');
+    if (Number.isFinite(Number(result.available))) { $('seatsTotal').textContent = Number(result.capacity) || CONFIG.seats; cachePut(Math.max(0, Number(result.available))); applyLeft(Math.max(0, Number(result.available))); }
+    $('doneText').textContent = result.status === 'резерв' ? 'Основные места уже заняты. Ваша заявка принята в резерв.' : 'Вы зарегистрированы! Ждём вас 3 декабря в 14:30 в WOWLand.';
+    $('form').style.display = 'none'; $('done').style.display = 'block'; $('done').scrollIntoView({ block: 'center', behavior: 'smooth' });
+  } catch (error) {
+    console.error(error); $('fail').style.display = 'block'; button.disabled = false; button.textContent = seatsFull ? 'Отправить заявку в резерв' : 'Отправить заявку';
+  } finally { submitting = false; clearTimeout(slowTimer); }
+});
+$('again').addEventListener('click', () => location.reload());
+</script>
+</body>
+</html>
