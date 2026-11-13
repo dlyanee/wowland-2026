@@ -118,6 +118,228 @@ main{max-width:710px;margin:-42px auto 60px;padding:0 16px}form,.done{background
 </section>
 </main>
 
+<!-- ===== БЛОК «СОСТОЯНИЕ ЗАПИСИ» · общий для всех форм «ДЛЯ НЕЁ» · версия 1 =====
+     Что делает: если запись закрыта во вкладке «ПАНЕЛЬ» общей таблицы (или места закончились,
+     а резерва нет), прячет форму и показывает «Запись закрыта». Сам заявки не отправляет и не меняет.
+     Правила: стоит ПЕРЕД основным скриптом формы; внутри ничего не менять; в основном скрипте должен быть
+     CONFIG = { scriptUrl, eventId }; на странице — id="form", "done", "send", "fail"
+     (если есть счётчик и баннер резерва — id="seatsBox" и id="reserveBanner").
+     Элементы с атрибутом data-when-open (например, кнопка «Записаться ↑») при закрытой записи прячутся.
+     Свои тексты можно задать атрибутами: data-title, data-text, data-text-full. -->
+<script id="dn-state">
+(function () {
+  'use strict';
+  if (window.__dnState || typeof window.fetch !== 'function') return;
+  window.__dnState = 1;
+
+  var doc = document, root = doc.documentElement, me = doc.currentScript;
+  function attr(name, fallback) { var v = me && me.getAttribute(name); return v ? v : fallback; }
+  var TEXT = {
+    title: attr('data-title', 'Запись закрыта'),
+    manual: attr('data-text', 'Приём заявок завершён. Спасибо всем, кто записался!'),
+    full: attr('data-text-full', 'Все места заняты. Спасибо всем, кто записался!'),
+    pillManual: 'Запись закрыта',
+    pillFull: 'Все места заняты',
+    reserveBefore: 'Основные места уже заняты. Заявку можно отправить в резерв.',
+    reserveAfter: 'Основные места уже заняты. Ваша заявка принята в резерв.'
+  };
+  var SCRIPT_PREFIX = 'https://script.google.com/macros/s/';
+  var nativeFetch = window.fetch;
+  var seen = { url: '', event: '' };     // адрес скрипта и код формы, замеченные в запросах самой формы
+  var pageAskedAt = 0, ownAskedAt = 0;   // когда о состоянии спрашивала форма и когда — этот блок
+  var card = null, pill = null, msgBox = null, reserveNote = null;
+
+  /* ---------- оформление ---------- */
+  var style = doc.createElement('style');
+  style.textContent =
+    'html.dn-is-closed #form,html.dn-is-closed #seatsBox,html.dn-is-closed [data-when-open]{display:none!important}' +
+    'html.dn-no-limit #seatsBox,html.dn-no-limit #reserveBanner,html.dn-no-reserve #reserveBanner{display:none!important}' +
+    'html.dn-has-msg #fail{display:none!important}' +
+    '.dn-card,.dn-pill,.dn-msgbox,.dn-off{display:none!important}' +
+    'html.dn-is-closed .dn-card,html.dn-is-closed .dn-pill,html.dn-has-msg .dn-msgbox{display:block!important}' +
+    '.dn-plain{background:#fff;border:2px solid #D4A64A;border-radius:22px;padding:36px 24px;box-shadow:0 12px 40px rgba(93,44,112,.14)}' +
+    '.dn-card,.dn-card h2,.dn-card p{text-align:center}.dn-card p{margin:0}' +
+    '.dn-msgbox{color:#B3261E;margin-top:14px;text-align:center;font-weight:600}' +
+    '.dn-note{background:#FFF4DC;border:2px solid #D4A64A;border-radius:16px;padding:14px 18px;margin:14px 0;font-weight:600;text-align:left}' +
+    '#done.dn-reserve-done>:not(h2):not(.dn-note):not(button){display:none!important}';
+  (doc.head || root).appendChild(style);
+
+  function byId(id) { return doc.getElementById(id); }
+  function shown(el) { return !!(el && el.getClientRects().length); }
+  function flag(name, on) { root.classList[on ? 'add' : 'remove'](name); }
+
+  /* ---------- карточка «Запись закрыта» ---------- */
+  function ensureCard() {
+    if (card) return;
+    var form = byId('form'), done = byId('done'), box = byId('seatsBox');
+    card = doc.createElement('section');
+    card.id = 'dnClosed';
+    card.className = (done && done.className ? done.className : 'dn-plain') + ' dn-card';
+    card.setAttribute('role', 'status');
+    card.appendChild(doc.createElement('h2'));
+    card.appendChild(doc.createElement('p'));
+    if (form && form.parentNode) form.parentNode.insertBefore(card, form);
+    else (doc.querySelector('main') || doc.body).appendChild(card);
+    if (box && box.parentNode) {
+      pill = doc.createElement(box.tagName);
+      pill.id = 'dnPill';
+      pill.className = box.className.replace(/\bclickable\b/g, '') + ' dn-pill';
+      box.parentNode.insertBefore(pill, box.nextSibling);
+    }
+  }
+
+  /* ---------- применяем состояние, которое сообщил сервер ---------- */
+  function applyState(data, fromPost) {
+    var form = byId('form');
+    var userInForm = !!(form && form.contains(doc.activeElement));
+    var closed = data.closed === true && !shown(byId('done'));   // тому, кто уже записался, «закрыто» не показываем
+    var wasClosed = root.classList.contains('dn-is-closed');
+    var full = (data.closedReason || data.reason) === 'full';
+
+    if (closed) {
+      ensureCard();
+      card.firstChild.textContent = TEXT.title;
+      card.lastChild.textContent = full ? TEXT.full : TEXT.manual;
+      if (pill) pill.textContent = full ? TEXT.pillFull : TEXT.pillManual;
+    }
+    flag('dn-is-closed', closed);
+    if (typeof data.reserve === 'boolean') flag('dn-no-reserve', !data.reserve);
+    if (!fromPost) flag('dn-no-limit', data.result === 'ok' && data.capacity === null);
+
+    if (closed && !wasClosed && (fromPost || userInForm)) {
+      try { card.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { card.scrollIntoView(); }
+    }
+
+    // Формы без своего баннера резерва: честно предупреждаем, что основные места заняты
+    var needNote = !closed && data.reserve !== false && Number(data.capacity) > 0 &&
+      data.available !== null && Number(data.available) === 0 && !byId('reserveBanner');
+    if (needNote && !reserveNote) {
+      var send = byId('send');
+      if (send && send.parentNode) {
+        reserveNote = doc.createElement('div');
+        reserveNote.id = 'dnReserve';
+        reserveNote.className = 'dn-note';
+        reserveNote.textContent = TEXT.reserveBefore;
+        send.parentNode.insertBefore(reserveNote, send);
+      }
+    }
+    if (reserveNote) reserveNote.classList[needNote ? 'remove' : 'add']('dn-off');
+
+    setTimeout(fixSendLabel, 0);
+    setTimeout(fixSendLabel, 250);
+  }
+
+  // Резерва или лимита нет — убираем с кнопки слова «в резерв», которые форма могла подставить сама
+  function fixSendLabel() {
+    if (!root.classList.contains('dn-no-reserve') && !root.classList.contains('dn-no-limit')) return;
+    var button = byId('send');
+    if (!button || button.disabled) return;
+    var text = button.textContent, next = text.replace(/\s+в\s+резерв\s*$/, '');
+    if (next !== text && next.replace(/\s/g, '')) button.textContent = next;
+  }
+
+  // Сообщение сервера для посетителя (например, «осталось 1 место, а в заявке 2 участника»)
+  function showMessage(text) {
+    if (!msgBox) {
+      var anchor = byId('fail') || byId('send');
+      if (!anchor || !anchor.parentNode) return;
+      msgBox = doc.createElement('div');
+      msgBox.id = 'dnMsg';
+      msgBox.className = 'dn-msgbox';
+      msgBox.setAttribute('role', 'alert');
+      anchor.parentNode.insertBefore(msgBox, anchor.nextSibling);
+    }
+    msgBox.textContent = text;
+    flag('dn-has-msg', true);
+  }
+
+  // Заявка ушла в резерв, а экран «Спасибо» про резерв не знает: пишем об этом
+  // и прячем слова вроде «ждём вас», рассчитанные на обычную запись
+  function noteReserveOnDone() {
+    var done = byId('done');
+    if (!done || /резерв/i.test(done.textContent)) return;
+    done.classList.add('dn-reserve-done');
+    var note = doc.createElement('p');
+    note.id = 'dnReserveDone';
+    note.className = 'dn-note';
+    note.textContent = TEXT.reserveAfter;
+    var heading = done.querySelector('h2');
+    done.insertBefore(note, heading ? heading.nextSibling : done.firstChild);
+  }
+
+  function handle(data, isPost) {
+    if (!data || typeof data !== 'object') return;
+    if (isPost) {
+      if (data.result === 'ok') {                       // заявка принята — экран «Спасибо» показывает сама форма
+        if (data.status === 'резерв') setTimeout(noteReserveOnDone, 400);
+        return;
+      }
+      if (data.closed !== true && data.userMessage) showMessage(String(data.userMessage));
+    }
+    if (typeof data.closed === 'boolean') applyState(data, isPost);
+  }
+
+  /* ---------- слушаем ответы общего скрипта на запросы самой формы ---------- */
+  function ours(url) { return typeof url === 'string' && url.indexOf(SCRIPT_PREFIX) === 0; }
+  function remember(url, body) {
+    try {
+      var q = url.indexOf('?');
+      seen.url = q === -1 ? url : url.slice(0, q);
+      var match = q === -1 ? null : /[?&]event=([^&#]*)/.exec(url);
+      if (match) seen.event = decodeURIComponent(match[1]);
+      else if (typeof body === 'string') { var id = JSON.parse(body)._event; if (id) seen.event = String(id); }
+    } catch (e) {}
+  }
+
+  window.fetch = function (input, init) {
+    var promise = nativeFetch.apply(window, arguments);
+    try {
+      var url = typeof input === 'string' ? input : String((input && input.url) || input);
+      if (ours(url)) {
+        var isPost = String((init && init.method) || (input && input.method) || 'GET').toUpperCase() === 'POST';
+        remember(url, init && init.body);
+        if (isPost) flag('dn-has-msg', false); else pageAskedAt = Date.now();
+        promise
+          .then(function (response) { return response.clone().json(); })
+          .then(function (data) { handle(data, isPost); })
+          .catch(function () {});
+      }
+    } catch (e) {}
+    return promise;
+  };
+
+  /* ---------- если форма сама сервер не спрашивает (нет счётчика) — спрашиваем за неё ---------- */
+  function config() {
+    try {
+      if (typeof CONFIG === 'object' && CONFIG && CONFIG.scriptUrl && CONFIG.eventId) {
+        return { url: String(CONFIG.scriptUrl), event: String(CONFIG.eventId) };
+      }
+    } catch (e) {}
+    return seen.url && seen.event ? seen : null;
+  }
+  function poll() {
+    var now = Date.now();
+    if (doc.hidden || now - pageAskedAt < 70000 || now - ownAskedAt < 20000) return;
+    var c = config();
+    if (!c || !ours(c.url)) return;
+    ownAskedAt = now;
+    nativeFetch.call(window, c.url + '?action=count&event=' + encodeURIComponent(c.event) + '&_ts=' + now, { cache: 'no-store' })
+      .then(function (response) { return response.json(); })
+      .then(function (data) { handle(data, false); })
+      .catch(function () {});
+  }
+  function pollSoon() { setTimeout(poll, 1500); }
+
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', function () { setTimeout(poll, 300); });
+  else setTimeout(poll, 300);
+  setInterval(poll, 60000);
+  window.addEventListener('focus', pollSoon);
+  window.addEventListener('online', pollSoon);
+  doc.addEventListener('visibilitychange', pollSoon);
+  doc.addEventListener('change', function () { setTimeout(fixSendLabel, 0); });
+})();
+</script>
+<!-- ===== КОНЕЦ БЛОКА «СОСТОЯНИЕ ЗАПИСИ» ===== -->
 <script>
 const CONFIG = {
   scriptUrl: 'https://script.google.com/macros/s/AKfycby6f8oJWYXJirDjXmvE0cEXWFj0a7bZn9KNPa9qDId6ekyx0MSsb_EUz8rvoALw3aaS/exec',
